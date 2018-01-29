@@ -156,6 +156,13 @@ export class ChromeController {
   }
 
   /**
+   * @export
+   */
+  logout() {
+    location.href = '/logout';
+  }
+
+  /**
    * @return {string}
    * @export
    */

@@ -23,6 +23,7 @@ import authModule from './common/auth/module';
 import csrfTokenModule from './common/csrftoken/module';
 import scalingModule from './common/scaling/module';
 import settingsServiceModule from './common/settings/module';
+import sessionKeepalvieModule from './common/sessionkeepalive/module';
 import configModule from './config/module';
 import configMapModule from './configmap/module';
 import cronJobModule from './cronjob/module';
@@ -74,6 +75,7 @@ export default angular
           aboutModule.name,
           settingsModule.name,
           settingsServiceModule.name,
+          sessionKeepalvieModule.name,
           authModule.name,
           overviewModule.name,
           chromeModule.name,

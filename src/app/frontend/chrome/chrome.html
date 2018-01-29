@@ -40,6 +40,17 @@ limitations under the License.
         </md-tooltip>
         [[Create|Label for global action bar create button.]]
       </md-button>
+      <md-button ng-click="$ctrl.logout()"
+                 class="kd-actionbar-button">
+        <md-icon class="kd-global-action-icon">directions run</md-icon>
+        <md-tooltip md-delay="500"
+                    md-autohide>
+          <div class="kd-actionbar-button-text">
+            Logout Kubernetes dashboard
+          </div>
+        </md-tooltip>
+        Logout
+      </md-button>
       <kd-control-panel></kd-control-panel>
     </div>
   </div>
