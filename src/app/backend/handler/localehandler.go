@@ -24,6 +24,7 @@ import (
 
 	"github.com/golang/glog"
 	"golang.org/x/text/language"
+	"github.com/kubernetes/dashboard/src/app/backend/utils"
 )
 
 const defaultLocaleDir = "en"
@@ -107,6 +108,9 @@ func (handler *LocaleHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 		// Do not store the html page in the cache. If the user is to click on 'switch language',
 		// we want a different index.html (for the right locale) to be served when the page refreshes.
 		w.Header().Add("Cache-Control", "no-store")
+	}
+	if utils.CheckRedirectPage(w, r) {
+		return
 	}
 	acceptLanguage := os.Getenv("ACCEPT_LANGUAGE")
 	if acceptLanguage == "" {

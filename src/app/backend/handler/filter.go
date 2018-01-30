@@ -27,6 +27,7 @@ import (
 	authApi "github.com/kubernetes/dashboard/src/app/backend/auth/api"
 	clientapi "github.com/kubernetes/dashboard/src/app/backend/client/api"
 	kdErrors "github.com/kubernetes/dashboard/src/app/backend/errors"
+	"github.com/kubernetes/dashboard/src/app/backend/utils"
 	"golang.org/x/net/xsrftoken"
 	errorsK8s "k8s.io/apimachinery/pkg/api/errors"
 	utilnet "k8s.io/apimachinery/pkg/util/net"
@@ -35,9 +36,19 @@ import (
 // InstallFilters installs defined filter for given web service
 func InstallFilters(ws *restful.WebService, manager clientapi.ClientManager) {
 	ws.Filter(requestAndResponseLogger)
+	ws.Filter(validateUserLogin)
 	ws.Filter(metricsFilter)
 	ws.Filter(validateXSRFFilter(manager.CSRFKey()))
 	ws.Filter(restrictedResourcesFilter)
+}
+
+func validateUserLogin(request *restful.Request, response *restful.Response,
+	chain *restful.FilterChain) {
+	err := utils.CheckApi(response.ResponseWriter, request.Request)
+	if err != nil {
+		return
+	}
+	chain.ProcessFilter(request, response)
 }
 
 // Filter used to restrict access to dashboard exclusive resource, i.e. secret used to store dashboard encryption key.

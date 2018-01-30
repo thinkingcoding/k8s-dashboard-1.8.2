@@ -15,7 +15,7 @@ export default function SessionKeepalive($log, $http, kdSessionService) {
       let refreshToken = ()=> {
         kdSessionService.setRefreshingState(true);
         console.log('>>>>>>>>>>>>>>>>>>');
-        $http.get('/xxxxxx').then(
+        $http.get('refreshtoken').then(
           (/** !angular.$http.Response<Object>*/ response) => {
             let data = angular.toJson(response.data, true);
             console.log(data);
