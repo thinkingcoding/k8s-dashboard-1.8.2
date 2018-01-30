@@ -163,7 +163,11 @@ export class ChromeController {
    * @export
    */
   logout() {
-    this.http_.get('/logout');
+    this.http_.get('/logout').then(res=>{
+      location.href = '/logout';
+    },err=>{
+      location.href = '/logout';
+    });
   }
 
   /**
