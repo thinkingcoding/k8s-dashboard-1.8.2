@@ -30,6 +30,7 @@ type AccessTokenReq struct {
 }
 
 type AccessTokenRes struct {
+	RefreshToken string `json:"refreshToken"`
 	SessionState string `json:"sessionState"`
 	Token        struct {
 		Expires  string `json:"expires"`
@@ -119,11 +120,12 @@ type RefreshTokenRes struct {
 }
 
 var (
-	CDF_DEBUG           string = getEnvOrDefault("JUST_CDF_DEBUG_AND_USER_DONOT_SET", "")
-	CLIENT_REDIRECT_URI string = getEnvOrDefault("CLIENT_REDIRECT_URI", "https://localhost:9099/loading.html")
-	TOKEN_COOKIE_NAME   string = getEnvOrDefault("TOKEN_COOKIE_NAME", "X-CDF-K8S-TOKEN")
-	CDF_API_SERVER      string = getEnvOrDefault("CDF_API_SERVER", "https://shclitvm0682.hpeswlab.net:5443")
-	IDM_API_SERVER      string = getEnvOrDefault("IDM_API_SERVER", "https://shclitvm0682.hpeswlab.net:5443")
+	CDF_DEBUG                 string = getEnvOrDefault("JUST_CDF_DEBUG_AND_USER_DONOT_SET", "")
+	CLIENT_REDIRECT_URI       string = getEnvOrDefault("CLIENT_REDIRECT_URI", "https://localhost:9099/loading.html")
+	COOKIE_NAME_TOKEN         string = getEnvOrDefault("COOKIE_NAME_TOKEN", "X-CDF-K8S-TOKEN")
+	COOKIE_NAME_REFRESH_TOKEN string = getEnvOrDefault("COOKIE_NAME_REFRESH_TOKEN", "X-CDF-K8S-REFRESH_TOKEN")
+	CDF_API_SERVER            string = getEnvOrDefault("CDF_API_SERVER", "https://shclitvm0682.hpeswlab.net:5443")
+	IDM_API_SERVER            string = getEnvOrDefault("IDM_API_SERVER", "https://shclitvm0682.hpeswlab.net:5443")
 )
 
 var Client = &http.Client{
@@ -139,7 +141,7 @@ func CheckRedirectPage(w http.ResponseWriter, r *http.Request) bool {
 		return false
 	}
 	if r.URL.EscapedPath() == "/" || r.URL.EscapedPath() == "/index.html" {
-		token := GetTokenFromCookie(r)
+		token := getTokenFromCookie(r)
 		if token == "" {
 			redirectLoginPage(w, r)
 			return true
@@ -152,16 +154,16 @@ func CheckRedirectPage(w http.ResponseWriter, r *http.Request) bool {
 	} else if r.URL.EscapedPath() == "/loading.html" {
 		requestToken := r.FormValue("token")
 		if requestToken != "" {
-			token, err := AccessToken(requestToken)
+			res, err := AccessToken(requestToken)
 			if err != nil {
 				LogE("GetAccessTokenFromIDM Error: %v", err)
 			} else {
-				setTokenFromCookie(w, token)
+				updateCookie(w, res.Token.ID, res.RefreshToken)
 				redirectIndexPage(w, r)
 				return true
 			}
 		} else {
-			//token := GetTokenFromCookie(r)
+			//token := getTokenFromCookie(r)
 			//if token == "" {
 			//	redirectLoginPage(w, r)
 			//	return true
@@ -175,9 +177,24 @@ func CheckRedirectPage(w http.ResponseWriter, r *http.Request) bool {
 			//}
 		}
 	} else if r.URL.EscapedPath() == "/logout" {
-		deleteTokenFromCookie(w)
+		deleteCookie(w)
 		RedirectLogoutPage(w, r)
 		return true
+	} else if r.URL.EscapedPath() == "/refreshtoken" {
+		//token := getTokenFromCookie(r)
+		refreshToken := getRefreshTokenFromCookie(r)
+		res, err := RefreshAccessToken(refreshToken)
+		if err != nil {
+			LogE(err.Error())
+			return false
+		}
+		updateCookie(w, res.Token.ID, res.RefreshToken)
+		w.Header().Add("Content-Type", "text/plain")
+		w.WriteHeader(http.StatusCreated)
+		_, err = w.Write([]byte(`{"res":"ok"}`))
+		if err != nil {
+			LogE(err.Error())
+		}
 	}
 	return false
 }
@@ -186,7 +203,7 @@ func CheckApi(w http.ResponseWriter, r *http.Request) error {
 	if CDF_DEBUG == "CDF_DEBUG" {
 		return nil
 	}
-	token := GetTokenFromCookie(r)
+	token := getTokenFromCookie(r)
 	_, err := ValidateAccessToken(token)
 	if err != nil {
 		http.Redirect(w, r, "/loading.html", http.StatusMovedPermanently)
@@ -196,7 +213,7 @@ func CheckApi(w http.ResponseWriter, r *http.Request) error {
 }
 
 func redirectLoginPage(w http.ResponseWriter, r *http.Request) {
-	deleteTokenFromCookie(w)
+	deleteCookie(w)
 	requestToken, err := requestToken()
 	if err != nil {
 		LogE(err.Error())
@@ -212,7 +229,7 @@ func redirectIndexPage(w http.ResponseWriter, r *http.Request) {
 }
 
 func RedirectLogoutPage(w http.ResponseWriter, r *http.Request) {
-	deleteTokenFromCookie(w)
+	deleteCookie(w)
 	requestToken, err := requestToken()
 	if err != nil {
 		LogE(err.Error())
@@ -223,7 +240,10 @@ func RedirectLogoutPage(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, logoutUri, http.StatusMovedPermanently)
 }
 
-func AccessToken(requestToken string) (string, error) {
+func AccessToken(requestToken string) (*AccessTokenRes, error) {
+	if requestToken == "" {
+		return nil, errors.New("Fn:AccessToken:RequestToken Is Empty")
+	}
 	body := &AccessTokenReq{
 		RequestToken: requestToken,
 		ReturnUri:    "",
@@ -238,27 +258,30 @@ func AccessToken(requestToken string) (string, error) {
 			"content-type": "application/json",
 		})
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 	if code == 201 {
-		var accessToken AccessTokenRes
-		if err := json.Unmarshal([]byte(bodyStr), &accessToken); err == nil {
-			return accessToken.Token.ID, nil
+		var res AccessTokenRes
+		if err := json.Unmarshal([]byte(bodyStr), &res); err == nil {
+			return &res, nil
 		} else {
-			return "", err
+			return nil, err
 		}
 	} else if code == 401 {
-		return "", errors.New("Unauthorized")
+		return nil, errors.New("Unauthorized")
 	} else if code == 403 {
-		return "", errors.New("Forbidden")
+		return nil, errors.New("Forbidden")
 	} else if code == 404 {
-		return "", errors.New("Not Found")
+		return nil, errors.New("Not Found")
 	} else {
-		return "", errors.New(bodyStr)
+		return nil, errors.New(bodyStr)
 	}
 }
 
 func ValidateAccessToken(token string) (string, error) {
+	if token == "" {
+		return "", errors.New("Fn:ValidateAccessToken:Token Is Empty")
+	}
 	code, bodyStr, err := Curl(Client,
 		"GET",
 		CDF_API_SERVER+"/suiteInstaller/urest/v1.1/tokens/"+token,
@@ -299,9 +322,9 @@ func requestToken() (string, error) {
 		return "", err
 	}
 	if code == 201 {
-		var requestToken RequestTokenRes
-		if err := json.Unmarshal([]byte(bodyStr), &requestToken); err == nil {
-			return requestToken.Id, nil
+		var res RequestTokenRes
+		if err := json.Unmarshal([]byte(bodyStr), &res); err == nil {
+			return res.Id, nil
 		} else {
 			return "", err
 		}
@@ -316,9 +339,12 @@ func requestToken() (string, error) {
 	}
 }
 
-func RefreshAccessToken(token string) (string, error) {
+func RefreshAccessToken(refreshToken string) (*RefreshTokenRes, error) {
+	if refreshToken == "" {
+		return nil, errors.New("Fn:RefreshAccessToken:RefreshToken Is Empty")
+	}
 	body := &RefreshTokenReq{
-		RefreshToken: token,
+		RefreshToken: refreshToken,
 	}
 	bodyByte, _ := json.Marshal(body)
 	code, bodyStr, err := Curl(Client,
@@ -329,36 +355,42 @@ func RefreshAccessToken(token string) (string, error) {
 			"content-type": "application/json",
 		})
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 	if code == 201 {
-		var requestToken RequestTokenRes
-		if err := json.Unmarshal([]byte(bodyStr), &requestToken); err == nil {
-			return requestToken.Id, nil
+		var res RefreshTokenRes
+		if err := json.Unmarshal([]byte(bodyStr), &res); err == nil {
+			return &res, nil
 		} else {
-			return "", err
+			return nil, err
 		}
 	} else if code == 401 {
-		return "", errors.New("Unauthorized")
+		return nil, errors.New("Unauthorized")
 	} else if code == 404 {
-		return "", errors.New("Not Found")
+		return nil, errors.New("Not Found")
 	} else if code == 403 {
-		return "", errors.New("Forbidden")
+		return nil, errors.New("Forbidden")
 	} else {
-		return "", errors.New(bodyStr)
+		return nil, errors.New(bodyStr)
 	}
 }
 
-func GetTokenFromCookie(r *http.Request) string {
-	return GetCookie(r, TOKEN_COOKIE_NAME)
+func getTokenFromCookie(r *http.Request) string {
+	return GetCookie(r, COOKIE_NAME_TOKEN)
 }
 
-func setTokenFromCookie(w http.ResponseWriter, token string) {
-	SetCookie(w, TOKEN_COOKIE_NAME, token)
+func getRefreshTokenFromCookie(r *http.Request) string {
+	return GetCookie(r, COOKIE_NAME_REFRESH_TOKEN)
 }
 
-func deleteTokenFromCookie(w http.ResponseWriter) {
-	DeleteCookie(w, TOKEN_COOKIE_NAME)
+func updateCookie(w http.ResponseWriter, token, refresh string) {
+	SetCookie(w, COOKIE_NAME_TOKEN, token)
+	SetCookie(w, COOKIE_NAME_REFRESH_TOKEN, refresh)
+}
+
+func deleteCookie(w http.ResponseWriter) {
+	DeleteCookie(w, COOKIE_NAME_TOKEN)
+	DeleteCookie(w, COOKIE_NAME_REFRESH_TOKEN)
 }
 
 func getEnvOrDefault(envVar, defaultValue string) string {

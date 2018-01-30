@@ -27,10 +27,17 @@ export class SessionService {
 
   /**
    *
-   * @param {boolean} value
    * @export
    */
-  setRefreshingState(value){
-    this.isRefreshingSession = value;
+  startRefresh(){
+    this.isRefreshingSession = true;
+  }
+
+  /**
+   *
+   * @export
+   */
+  endRefresh(){
+    this.isRefreshingSession = false;
   }
 }

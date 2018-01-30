@@ -13,17 +13,15 @@ export default function SessionKeepalive($log, $http, kdSessionService) {
     link: (scope, element, attrs) => {
 
       let refreshToken = ()=> {
-        kdSessionService.setRefreshingState(true);
-        console.log('>>>>>>>>>>>>>>>>>>');
+        kdSessionService.startRefresh();
         $http.get('refreshtoken').then(
           (/** !angular.$http.Response<Object>*/ response) => {
             let data = angular.toJson(response.data, true);
             console.log(data);
-            kdSessionService.setRefreshingState(false);
+            kdSessionService.endRefresh();
           },
           (err) => {
-            console.log('eeeeeeeeeeeeeeeeeeeeeee');
-            kdSessionService.setRefreshingState(false);
+            kdSessionService.endRefresh();
           });
       };
 
