@@ -189,12 +189,13 @@ func CheckRedirectPage(w http.ResponseWriter, r *http.Request) bool {
 			return false
 		}
 		updateCookie(w, res.Token.ID, res.RefreshToken)
-		w.Header().Add("Content-Type", "text/plain")
+		w.Header().Add("Content-Type", "application/json")
 		w.WriteHeader(http.StatusCreated)
 		_, err = w.Write([]byte(`{"res":"ok"}`))
 		if err != nil {
 			LogE(err.Error())
 		}
+		return true
 	}
 	return false
 }
