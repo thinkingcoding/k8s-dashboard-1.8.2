@@ -17,7 +17,7 @@ export default function SessionKeepalive($log, $http, kdSessionService) {
         $http.get('refreshtoken').then(
           (/** !angular.$http.Response<Object>*/ response) => {
             let data = angular.toJson(response.data, true);
-            console.log(data);
+            $log.info(data);
             kdSessionService.endRefresh();
           },
           (err) => {
@@ -37,12 +37,10 @@ export default function SessionKeepalive($log, $http, kdSessionService) {
       };
 
       element.on('mousedown', () => {
-        $log.info('mousedown');
         checkRefreshSession();
       });
 
       element.on('keydown', () => {
-        $log.info('keydown');
         checkRefreshSession();
       });
     }

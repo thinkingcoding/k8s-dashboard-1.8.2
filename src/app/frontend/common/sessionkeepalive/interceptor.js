@@ -24,9 +24,8 @@ export class HttpInterceptor {
       return config;
     };
     this.responseError = response => {
-      if(response.status === 301){
-        console.log('tiaotiao');
-        location.href = '/';
+      if(response.status === 401){
+        location.href = '/logout';
       }
       return $q.reject(response);
     };
@@ -38,7 +37,6 @@ export class HttpInterceptor {
       defer.resolve(config);
     }
     function waitingResolve(defer, config, $count){
-      console.log('>>>:' + $count[0]);
       if($count[0] <= 0) {
         resolve(defer, config);
         return;

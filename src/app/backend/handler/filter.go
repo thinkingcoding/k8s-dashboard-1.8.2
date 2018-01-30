@@ -46,6 +46,8 @@ func validateUserLogin(request *restful.Request, response *restful.Response,
 	chain *restful.FilterChain) {
 	err := utils.CheckApi(response.ResponseWriter, request.Request)
 	if err != nil {
+		response.AddHeader("Content-Type", "application/json")
+		response.WriteErrorString(http.StatusUnauthorized, fmt.Sprintf(`{"error":"%s"}`, err.Error()))
 		return
 	}
 	chain.ProcessFilter(request, response)

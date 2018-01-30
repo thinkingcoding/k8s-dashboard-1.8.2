@@ -136,19 +136,17 @@ var Client = &http.Client{
 	},
 }
 
-func CheckRedirectPage(w http.ResponseWriter, r *http.Request) bool {
+func CheckRedirectPage(w http.ResponseWriter, r *http.Request) {
 	if CDF_DEBUG == "CDF_DEBUG" {
-		return false
+		return
 	}
 	if r.URL.EscapedPath() == "/" || r.URL.EscapedPath() == "/index.html" {
 		token := getTokenFromCookie(r)
 		if token == "" {
 			redirectLoginPage(w, r)
-			return true
 		} else {
 			if _, err := ValidateAccessToken(token); err != nil {
 				redirectLoginPage(w, r)
-				return true
 			}
 		}
 	} else if r.URL.EscapedPath() == "/loading.html" {
@@ -160,33 +158,30 @@ func CheckRedirectPage(w http.ResponseWriter, r *http.Request) bool {
 			} else {
 				updateCookie(w, res.Token.ID, res.RefreshToken)
 				redirectIndexPage(w, r)
-				return true
 			}
 		} else {
-			//token := getTokenFromCookie(r)
-			//if token == "" {
-			//	redirectLoginPage(w, r)
-			//	return true
-			//} else {
-			//	if _, err := ValidateAccessToken(token); err != nil {
-			//		redirectLoginPage(w, r)
-			//		return true
-			//	}
-			//	redirectIndexPage(w, r)
-			//	return true
-			//}
+			token := getTokenFromCookie(r)
+			if token == "" {
+				redirectLoginPage(w, r)
+			} else {
+				_, err := ValidateAccessToken(token)
+				if err != nil {
+					redirectLoginPage(w, r)
+				} else {
+					redirectIndexPage(w, r)
+				}
+			}
 		}
 	} else if r.URL.EscapedPath() == "/logout" {
 		deleteCookie(w)
 		RedirectLogoutPage(w, r)
-		return true
 	} else if r.URL.EscapedPath() == "/refreshtoken" {
 		//token := getTokenFromCookie(r)
 		refreshToken := getRefreshTokenFromCookie(r)
 		res, err := RefreshAccessToken(refreshToken)
 		if err != nil {
 			LogE(err.Error())
-			return false
+			return
 		}
 		updateCookie(w, res.Token.ID, res.RefreshToken)
 		w.Header().Add("Content-Type", "application/json")
@@ -195,9 +190,7 @@ func CheckRedirectPage(w http.ResponseWriter, r *http.Request) bool {
 		if err != nil {
 			LogE(err.Error())
 		}
-		return true
 	}
-	return false
 }
 
 func CheckApi(w http.ResponseWriter, r *http.Request) error {
@@ -206,11 +199,7 @@ func CheckApi(w http.ResponseWriter, r *http.Request) error {
 	}
 	token := getTokenFromCookie(r)
 	_, err := ValidateAccessToken(token)
-	if err != nil {
-		http.Redirect(w, r, "/loading.html", http.StatusMovedPermanently)
-		return err
-	}
-	return nil
+	return err
 }
 
 func redirectLoginPage(w http.ResponseWriter, r *http.Request) {
