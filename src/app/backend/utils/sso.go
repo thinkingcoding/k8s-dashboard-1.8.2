@@ -121,9 +121,9 @@ type RefreshTokenRes struct {
 
 var (
 	CDF_DEBUG                 string = getEnvOrDefault("JUST_CDF_DEBUG_AND_USER_DONOT_SET", "")
-	CLIENT_REDIRECT_URI       string = getEnvOrDefault("CLIENT_REDIRECT_URI", "https://localhost:9099/loading.html")
+	CLIENT_REDIRECT_URI       string = getEnvOrDefault("CLIENT_REDIRECT_URI", "https://localhost:9099") + "/loading.html"
 	COOKIE_NAME_TOKEN         string = getEnvOrDefault("COOKIE_NAME_TOKEN", "X-CDF-K8S-TOKEN")
-	COOKIE_NAME_REFRESH_TOKEN string = getEnvOrDefault("COOKIE_NAME_REFRESH_TOKEN", "X-CDF-K8S-REFRESH_TOKEN")
+	COOKIE_NAME_REFRESH_TOKEN string = getEnvOrDefault("COOKIE_NAME_REFRESH_TOKEN", "X-CDF-K8S-REFRESH-TOKEN")
 	CDF_API_SERVER            string = getEnvOrDefault("CDF_API_SERVER", "https://shclitvm0682.hpeswlab.net:5443")
 	IDM_API_SERVER            string = getEnvOrDefault("IDM_API_SERVER", "https://shclitvm0682.hpeswlab.net:5443")
 )
@@ -386,7 +386,7 @@ func deleteCookie(w http.ResponseWriter) {
 func getEnvOrDefault(envVar, defaultValue string) string {
 	v := os.Getenv(envVar)
 	if v == "" {
-		LogW("%s=%s", envVar, defaultValue)
+		LogI("%s=%s", envVar, defaultValue)
 		return defaultValue
 	}
 	return v

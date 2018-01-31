@@ -25,7 +25,7 @@ export const ALL_NAMESPACES = '_all';
  * Default namespace.
  * @type {string}
  */
-export const DEFAULT_NAMESPACE = 'default';
+export const DEFAULT_NAMESPACE = 'core';
 
 /**
  * Regular expression for namespace validation.
