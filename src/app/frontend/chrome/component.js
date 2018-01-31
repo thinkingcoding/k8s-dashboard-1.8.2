@@ -29,10 +29,9 @@ export class ChromeController {
    * @param {!kdUiRouter.$transitions} $transitions
    * @param {!angular.$resource} $resource
    * @param {!angular.$sce} $sce
-   * @param {!angular.$http} $http
    * @ngInject
    */
-  constructor($state, $timeout, $transitions, $resource, $sce, $http) {
+  constructor($state, $timeout, $transitions, $resource, $sce) {
     /**
      * By default this is true to show loading spinner for the first page.
      * @export {boolean}
@@ -59,9 +58,6 @@ export class ChromeController {
 
     /** @private {!angular.$sce} */
     this.sce_ = $sce;
-
-    /** @private {!angular.$http} */
-    this.http_ = $http;
 
     /** @private {!backendApi.SystemBanner} */
     this.systemBanner_;
@@ -163,11 +159,9 @@ export class ChromeController {
    * @export
    */
   logout() {
-    this.http_.get('/logout').then(res=>{
-      location.href = '/logout';
-    },err=>{
-      location.href = '/logout';
-    });
+  	this.timeout_(()=>{
+  		location.href = '/logout';
+  	}, 10);
   }
 
   /**
