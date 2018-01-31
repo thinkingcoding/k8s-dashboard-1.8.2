@@ -1,12 +1,11 @@
 /**
  *
- * @param {!angular.$log} $log
  * @param {!angular.$http} $http
  * @param {!./service.SessionService} kdSessionService
  * @return {!angular.Directive}
  * @ngInject
  * */
-export default function SessionKeepalive($log, $http, kdSessionService) {
+export default function SessionKeepalive($http, kdSessionService) {
   let lastTime = new Date().getTime();
   return {
     restrict: 'A',
@@ -15,9 +14,7 @@ export default function SessionKeepalive($log, $http, kdSessionService) {
       let refreshToken = ()=> {
         kdSessionService.startRefresh();
         $http.get('refreshtoken').then(
-          (/** !angular.$http.Response<Object>*/ response) => {
-            let data = angular.toJson(response.data, true);
-            $log.info(data);
+          () => {
             kdSessionService.endRefresh();
           },
           (err) => {
@@ -26,7 +23,7 @@ export default function SessionKeepalive($log, $http, kdSessionService) {
       };
 
       let isTDOA = ()=> {
-        return new Date().getTime() - lastTime > 1000 * 60 * 1;
+        return new Date().getTime() - lastTime > 1000 * 60 * 5;
       };
 
       let checkRefreshSession = () =>{

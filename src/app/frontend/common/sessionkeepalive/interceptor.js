@@ -12,7 +12,6 @@ export class HttpInterceptor {
       // with token stored in a cookie.
       if (config.url.indexOf('api/v1') !== -1) {
         let deferred = $q.defer();
-        console.log(config);
         if(kdSessionService.isRefreshing()){
           waitingResolve(deferred, config, [30]);
         }else{
