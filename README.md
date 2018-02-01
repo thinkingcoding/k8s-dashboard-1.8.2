@@ -1,4 +1,29 @@
 # Kubernetes Dashboard
+[TOC]
+# Modified:
+> base from kubernetes dashboard `1.8.2`
+
+## 1.Backend
+- [x] add SSO
+
+## 2.Frontend
+- [x] add `sessionkeepalive` module
+- [x] add **LOGOUT** button for user logout
+- [x] change **default namespace** from `default` to `core`
+
+## 3.Usage
+### using in yaml
+```yaml
+...
+env:
+- name: CLIENT_REDIRECT_URI
+  value: https://shclitvm0682.hpeswlab.net:9099
+- name: CDF_API_SERVER
+  value: https://shclitvm0682.hpeswlab.net:5443
+- name: IDM_API_SERVER
+  value: https://shclitvm0682.hpeswlab.net:5443
+...
+
 
 [![Build Status](https://travis-ci.org/kubernetes/dashboard.svg?branch=master)](https://travis-ci.org/kubernetes/dashboard)
 [![Go Report Card](https://goreportcard.com/badge/github.com/kubernetes/dashboard)](https://goreportcard.com/report/github.com/kubernetes/dashboard)
@@ -14,7 +39,7 @@ running in the cluster and troubleshoot them, as well as manage the cluster itse
 
 ## Getting Started
 
-**IMPORTANT:** Since version 1.7 Dashboard uses more secure setup. It means, that by default it has minimal set of
+**IMPORTANT:** Since ve-rsion 1.7 Dashboard uses more secure setup. It means, that by default it has minimal set of
 privileges and can only be accessed over HTTPS. It is recommended to read [Access Control](
 https://github.com/kubernetes/dashboard/wiki/Access-control) guide before performing any further steps.
 

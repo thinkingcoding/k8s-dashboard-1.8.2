@@ -160,7 +160,7 @@ export class ChromeController {
    */
   logout() {
   	this.timeout_(()=>{
-  		location.href = '/logout';
+  		location.href = 'logout?t=' + new Date().getTime();
   	}, 10);
   }
 
