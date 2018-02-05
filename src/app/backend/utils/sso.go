@@ -122,6 +122,7 @@ type RefreshTokenRes struct {
 var (
 	CDF_DEBUG                 string = getEnvOrDefault("JUST_CDF_DEBUG_AND_USER_DONOT_SET", "")
 	CLIENT_REDIRECT_URI       string = getEnvOrDefault("CLIENT_REDIRECT_URI", "https://localhost:9099") + "/loading.html"
+	CLIENT_BASE_PATH          string = getEnvOrDefault("CLIENT_BASE_PATH", "/dashboard")
 	COOKIE_NAME_TOKEN         string = getEnvOrDefault("COOKIE_NAME_TOKEN", "X-CDF-K8S-TOKEN")
 	COOKIE_NAME_REFRESH_TOKEN string = getEnvOrDefault("COOKIE_NAME_REFRESH_TOKEN", "X-CDF-K8S-REFRESH-TOKEN")
 	CDF_API_SERVER            string = getEnvOrDefault("CDF_API_SERVER", "https://shclitvm0682.hpeswlab.net:5443")
@@ -215,7 +216,7 @@ func redirectLoginPage(w http.ResponseWriter, r *http.Request) {
 }
 
 func redirectIndexPage(w http.ResponseWriter, r *http.Request) {
-	http.Redirect(w, r, "/#!/login", http.StatusMovedPermanently)
+	http.Redirect(w, r, CLIENT_BASE_PATH+"/#!/login", http.StatusMovedPermanently)
 }
 
 func RedirectLogoutPage(w http.ResponseWriter, r *http.Request) {

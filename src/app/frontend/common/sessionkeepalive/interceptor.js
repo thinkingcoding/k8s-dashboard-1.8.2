@@ -24,7 +24,7 @@ export class HttpInterceptor {
     };
     this.responseError = response => {
       if(response.status === 401){
-        location.href = '/logout';
+        location.href = 'logout';
       }
       return $q.reject(response);
     };
