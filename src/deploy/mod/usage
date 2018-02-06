@@ -1,0 +1,65 @@
+## prod:
+
+docker run \
+-v /root/.kube:/root/.kube \
+-v /opt/kubernetes/ssl:/opt/kubernetes/ssl \
+-p 9090:9099 \
+-p 3001:3001 \
+-e CLIENT_REDIRECT_URI=https://shclitvm0682.hpeswlab.net:9090 \
+-e CDF_API_SERVER=https://shclitvm0682.hpeswlab.net:5443 \
+-e IDM_API_SERVER=https://shclitvm0682.hpeswlab.net:5443 \
+-d localhost:5000/dashboard:m1.8.2 \
+/dashboard \
+--kubeconfig=/root/.kube/config \
+--heapster-host=http://15.119.82.180:30060 \
+--default-cert-dir=/opt/kubernetes/ssl \
+--tls-cert-file=server.crt \
+--tls-key-file=server.key \
+--bind-address=0.0.0.0 \
+--port=9099 \
+--disable-settings-authorizer=true
+
+## bin
+export ...
+
+./dashboard \
+--kubeconfig=/root/.kube/config \
+--heapster-host=http://15.119.82.180:30060 \
+--default-cert-dir=/opt/kubernetes/ssl \
+--tls-cert-file=server.crt \
+--tls-key-file=server.key \
+--bind-address=0.0.0.0 \
+--port=9099 \
+--disable-settings-authorizer=true
+
+
+## dev:
+docker run \
+-v /root/mng/dashboard-1.8.2:/dashboard \
+-v /root/.kube:/root/.kube \
+-v /opt/kubernetes/ssl:/opt/kubernetes/ssl  \
+-p 9090:9090 \
+-p 3001:3001 \
+-w /dashboard
+-it lxc968/ubuntu-dev:2.1 bash
+
+export KUBE_DASHBOARD_KUBECONFIG=/root/.kube/config
+export heapsterServerHost=http://15.119.82.180:30060
+export defaultCertDir=/opt/kubernetes/ssl
+export tlsCert=server.crt
+export tlsKey=server.key
+
+export CLIENT_REDIRECT_URI=https://shclitvm0682.hpeswlab.net:9099
+export CDF_API_SERVER=https://shclitvm0682.hpeswlab.net:5443
+export IDM_API_SERVER=https://shclitvm0682.hpeswlab.net:5443
+
+if close IDM SSO then export JUST_CDF_DEBUG_AND_USER_DONOT_SET=CDF_DEBUG
+
+npm install --unsafe-perm
+./node_modules/.bin/gulp serve
+
+## build:
+./node_modules/.bin/gulp build
+cd dist/amd64
+docker build -t localhost:5000/dashboard:m1.8.2 .
+docker save localhost:5000/dashboard:m1.8.2 |gzip -c > dashboard:m1.8.2.tgz
